@@ -17,15 +17,14 @@ proxies = {
 num_threads = config.getint('Settings', 'num_threads')
 
 # 网站根URL
-base_url = 'https://www.splendivilla.com/'  # 替换为你要爬取的网站的根URL
+# base_url = 'https://www.splendivilla.com/'
 
 # 已访问的URL列表
 visited_urls = []
 
 
 def crawl(url):
-    # 输出当前访问的链接
-    print("正在访问链接：", url)
+    print("探测：", url)
 
     # 如果已经访问过该URL，则跳过
     if url in visited_urls:
@@ -43,6 +42,8 @@ def crawl(url):
     for input_element in input_elements:
         # 打印包含文件上传字段的元素所在链接的信息
         print("在链接 {} 中找到包含文件上传字段的元素".format(url))
+        with open("success.txt", "a") as file:
+            file.write(url + "\n")
 
     # 将当前URL添加到已访问列表
     visited_urls.append(url)
@@ -54,7 +55,7 @@ def crawl(url):
         absolute_url = urljoin(url, href)
 
         # 确保链接是以网站根URL开头，并且不在已访问列表中
-        if absolute_url.startswith(base_url) and absolute_url not in visited_urls:
+        if absolute_url.startswith(url) and absolute_url not in visited_urls:
             # 使用with语句创建线程池，指定并发线程数
             with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
                 # 提交任务到线程池
@@ -62,6 +63,5 @@ def crawl(url):
                 # 等待任务完成
                 future.result()
 
-
 # 开始爬取网站
-crawl(base_url)
+# crawl(base_url)
