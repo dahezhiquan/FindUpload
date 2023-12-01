@@ -15,7 +15,8 @@
 3. 在命令行中执行以下命令来启动工具：
 
 ```bash
-python f.py
+python f.py -u # 扫描上传点
+python f.py -l # 扫描登录点
 ```
 
 4. 工具将自动进行扫描，当发现文件上传点时，将会输出结果到upload.txt文件中
