@@ -3,10 +3,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import configparser
 import concurrent.futures
-from collections import Counter
 import datetime
-
 import constant
+import fu
 
 # 读取配置信息
 config = configparser.ConfigParser()
@@ -24,17 +23,17 @@ num_threads = config.getint('Settings', 'num_threads')
 visited_urls = []
 
 '''
-递归访问链接，扫描上传点
+递归访问链接，扫描登录框
 '''
 
 
-def crawl(url):
+def login(url):
     current_datetime = datetime.datetime.now()
     formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
     print(constant.GREEN + str(formatted_datetime) + " 已探测：", url + constant.END)
 
     # 如果已经访问过该URL或需要取消递归，则跳过
-    if url in visited_urls or kill_recursion(url):
+    if url in visited_urls or fu.kill_recursion(url):
         return
 
     # 发送GET请求获取网页内容，并使用代理
@@ -45,11 +44,11 @@ def crawl(url):
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # 查找所有包含文件上传字段的元素
-    input_elements = soup.find_all('input', {'type': 'file'})
+    input_elements = soup.find_all('input', {'name': 'password', 'type': 'password'})
     for input_element in input_elements:
-        # 打印包含文件上传字段的元素所在链接的信息
-        print(constant.RED + str(formatted_datetime) + " 找到上传点：", url + constant.END)
-        with open("upload.txt", "a") as file:
+        # 打印包含登录框字段的元素所在链接的信息
+        print(constant.RED + str(formatted_datetime) + " 找到登录点：", url + constant.END)
+        with open("login.txt", "a") as file:
             file.write(url + "\n")
 
     # 将当前URL添加到已访问列表
@@ -66,22 +65,6 @@ def crawl(url):
             # 使用with语句创建线程池，指定并发线程数
             with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
                 # 提交任务到线程池
-                future = executor.submit(crawl, absolute_url)
+                future = executor.submit(login, absolute_url)
                 # 等待任务完成
                 future.result()
-
-
-'''
-去掉发生无限递归的链接
-'''
-
-
-def kill_recursion(url):
-    url_parts = url.split("/")
-    counts = Counter(url_parts)
-    # 遍历计数结果，找到超过4个的元素
-    for element, count in counts.items():
-        if count >= 4:
-            return True
-    else:
-        return False
