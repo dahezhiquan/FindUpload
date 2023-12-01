@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import configparser
 import concurrent.futures
+from collections import Counter
 import datetime
 
 import constant
@@ -22,14 +23,18 @@ num_threads = config.getint('Settings', 'num_threads')
 # 已访问的URL列表
 visited_urls = []
 
+'''
+递归访问链接
+'''
+
 
 def crawl(url):
     current_datetime = datetime.datetime.now()
     formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
     print(constant.GREEN + str(formatted_datetime) + " 已探测：", url + constant.END)
 
-    # 如果已经访问过该URL，则跳过
-    if url in visited_urls:
+    # 如果已经访问过该URL或需要取消递归，则跳过
+    if url in visited_urls or kill_recursion(url):
         return
 
     # 发送GET请求获取网页内容，并使用代理
@@ -44,7 +49,7 @@ def crawl(url):
     for input_element in input_elements:
         # 打印包含文件上传字段的元素所在链接的信息
         print(constant.RED + str(formatted_datetime) + " 找到上传点：", url + constant.END)
-        with open("success.txt", "a") as file:
+        with open("upload.txt", "a") as file:
             file.write(url + "\n")
 
     # 将当前URL添加到已访问列表
@@ -64,3 +69,19 @@ def crawl(url):
                 future = executor.submit(crawl, absolute_url)
                 # 等待任务完成
                 future.result()
+
+
+'''
+去掉发生无限递归的链接
+'''
+
+
+def kill_recursion(url):
+    url_parts = url.split("/")
+    counts = Counter(url_parts)
+    # 遍历计数结果，找到超过4个的元素
+    for element, count in counts.items():
+        if count >= 4:
+            return True
+    else:
+        return False
