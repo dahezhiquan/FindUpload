@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 import configparser
 import concurrent.futures
+import datetime
+
+import constant
 
 # 读取配置信息
 config = configparser.ConfigParser()
@@ -16,15 +19,14 @@ proxies = {
 
 num_threads = config.getint('Settings', 'num_threads')
 
-# 网站根URL
-# base_url = 'https://www.splendivilla.com/'
-
 # 已访问的URL列表
 visited_urls = []
 
 
 def crawl(url):
-    print("探测：", url)
+    current_datetime = datetime.datetime.now()
+    formatted_datetime = current_datetime.strftime("%Y-%m-%d %H:%M:%S")
+    print(constant.GREEN + str(formatted_datetime) + " 已探测：", url + constant.END)
 
     # 如果已经访问过该URL，则跳过
     if url in visited_urls:
@@ -41,7 +43,7 @@ def crawl(url):
     input_elements = soup.find_all('input', {'type': 'file'})
     for input_element in input_elements:
         # 打印包含文件上传字段的元素所在链接的信息
-        print("在链接 {} 中找到包含文件上传字段的元素".format(url))
+        print(constant.RED + str(formatted_datetime) + " 找到上传点：", url + constant.END)
         with open("success.txt", "a") as file:
             file.write(url + "\n")
 
@@ -62,6 +64,3 @@ def crawl(url):
                 future = executor.submit(crawl, absolute_url)
                 # 等待任务完成
                 future.result()
-
-# 开始爬取网站
-# crawl(base_url)
